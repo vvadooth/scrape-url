@@ -1,0 +1,26 @@
+# Binaries and build artifacts
+*.exe
+*.exe~
+*.so
+*.dll
+bin/
+
+# Go stuff
+*.test
+*.out
+
+# Environment files
+.env
+
+# Docker
+*.log
+
+# Editor files
+*.swp
+*.swo
+.vscode/
+.idea/
+
+venv/
+__pycache__/
+*.log
