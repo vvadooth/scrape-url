@@ -20,5 +20,5 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . /app
 WORKDIR /app
 
-# Run uvicorn directly, binding to 0.0.0.0 and using the PORT env var
-CMD uvicorn main:app --host 0.0.0.0 --port $PORT
+# Hardcode the port to 8080
+CMD uvicorn main:app --host 0.0.0.0 --port 8080
