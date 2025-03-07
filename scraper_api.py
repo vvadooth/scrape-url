@@ -25,13 +25,21 @@ def scrape_page(url: str) -> str:
         options = webdriver.ChromeOptions()
         options.add_argument("--headless")
         options.add_argument("--disable-gpu")
-        options.add_argument("--no-sandbox")  # Required for some cloud deployments
+        options.add_argument("--no-sandbox")  # Required for cloud deployments
         options.add_argument("--disable-dev-shm-usage")  # Prevent memory issues
         options.add_argument("--window-size=1920x1080")
+        options.add_argument("--log-level=3")  # Suppress extra logs
+
+        # Suppress WebDriverManager logs
+        logging.getLogger("webdriver_manager").setLevel(logging.CRITICAL)
 
         # Set up ChromeDriver service
-        service = Service(ChromeDriverManager().install())  # Auto-installs ChromeDriver
-        driver = webdriver.Chrome(service=service, options=options)
+        try:
+            service = Service(ChromeDriverManager().install())  # Auto-installs ChromeDriver
+            driver = webdriver.Chrome(service=service, options=options)
+        except Exception as e:
+            logger.warning(f"⚠️ ChromeDriver initialization failed: {e}")
+            return "WebDriver initialization failed."
 
         driver.get(url)
 
@@ -43,15 +51,19 @@ def scrape_page(url: str) -> str:
         time.sleep(3)
 
         # Extract content from body text
-        body = driver.find_element("tag name", "body")
-        body_text = body.text if body else ""
+        try:
+            body = driver.find_element("tag name", "body")
+            body_text = body.text.strip() if body else ""
+        except Exception:
+            body_text = ""
 
-        if not body_text.strip():
-            logger.error("❌ No text content found on page!")
-            return "Error: No text found on page"
-
-        extracted_content = ' '.join(body_text.split())[:200000]  # Limit to 5000 chars
         driver.quit()
+
+        if not body_text:
+            logger.warning("⚠️ No text content found on page!")
+            return "No text found on page."
+
+        extracted_content = ' '.join(body_text.split())[:2000000]  # Limit to 5000 chars
 
         logger.info(f"✅ Successfully extracted {len(extracted_content)} characters.")
         return extracted_content
@@ -69,14 +81,13 @@ def scrape_url(request: URLRequest):
 
     extracted_text = scrape_page(request.url)
 
-    # 🛠️ Log the extracted text for debugging
+    # 🛠️ Log extracted content
     logger.info(f"🔍 Extracted Content Length: {len(extracted_text)}")
     logger.debug(f"📝 Extracted Content Preview: {extracted_text[:500]}...")  # Only log first 500 chars
 
-    # 🛠️ Remove the incorrect error check
-    if not extracted_text.strip():
-        logger.error(f"❌ No content extracted from {request.url}")
-        raise HTTPException(status_code=500, detail="No content extracted")
+    if "error" in extracted_text.lower():
+        logger.error(f"❌ Scraping failed for {request.url}")
+        raise HTTPException(status_code=500, detail="Scraping failed.")
 
     return {
         "url": request.url,
