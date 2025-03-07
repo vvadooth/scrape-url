@@ -9,7 +9,7 @@ import logging
 # Initialize FastAPI
 app = FastAPI()
 
-# Configure logging (only INFO logs)
+# Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -25,12 +25,12 @@ def scrape_page(url: str) -> str:
         options = webdriver.ChromeOptions()
         options.add_argument("--headless")
         options.add_argument("--disable-gpu")
-        options.add_argument("--no-sandbox")  
-        options.add_argument("--disable-dev-shm-usage")  
+        options.add_argument("--no-sandbox")  # Required for some cloud deployments
+        options.add_argument("--disable-dev-shm-usage")  # Prevent memory issues
         options.add_argument("--window-size=1920x1080")
 
         # Set up ChromeDriver service
-        service = Service(ChromeDriverManager().install())  
+        service = Service(ChromeDriverManager().install())  # Auto-installs ChromeDriver
         driver = webdriver.Chrome(service=service, options=options)
 
         driver.get(url)
@@ -46,23 +46,39 @@ def scrape_page(url: str) -> str:
         body = driver.find_element("tag name", "body")
         body_text = body.text if body else ""
 
-        extracted_content = ' '.join(body_text.split())[:200000]  # Limit to 200,000 chars
+        if not body_text.strip():
+            logger.error("❌ No text content found on page!")
+            return "Error: No text found on page"
+
+        extracted_content = ' '.join(body_text.split())[:200000]  
         driver.quit()
 
-        return extracted_content if extracted_content.strip() else ""
+        logger.info(f"✅ Successfully extracted {len(extracted_content)} characters.")
+        return extracted_content
 
-    except Exception:
-        return ""  # Silently return an empty string on error (NO LOGGING)
+    except Exception as e:
+        logger.error(f"❌ Scraping failed: {str(e)}")
+        return f"Error: {str(e)}"
 
 @app.post("/scrape")
 def scrape_url(request: URLRequest):
     """API endpoint to scrape a URL."""
     if not request.url.startswith("http"):
+        logger.warning("🚨 Invalid URL format")
         raise HTTPException(status_code=400, detail="Invalid URL format")
 
     extracted_text = scrape_page(request.url)
 
+    # 🛠️ Log the extracted text for debugging
+    logger.info(f"🔍 Extracted Content Length: {len(extracted_text)}")
+    logger.debug(f"📝 Extracted Content Preview: {extracted_text[:500]}...")  # Only log first 500 chars
+
+    # 🛠️ Remove the incorrect error check
+    if not extracted_text.strip():
+        logger.error(f"❌ No content extracted from {request.url}")
+        raise HTTPException(status_code=500, detail="No content extracted")
+
     return {
         "url": request.url,
-        "content": extracted_text  # Returns extracted content or an empty string
+        "content": extracted_text
     }
