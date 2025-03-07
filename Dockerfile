@@ -20,5 +20,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . /app
 WORKDIR /app
 
-# Start FastAPI server using the correct port from Railway
-CMD ["sh", "-c", "uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000}"]
+# Copy the entrypoint script and ensure it's executable
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+# Use the entrypoint script to start the FastAPI app
+CMD ["/entrypoint.sh"]
