@@ -3,4 +3,3 @@ uvicorn
 selenium
 webdriver_manager
 requests
-os
