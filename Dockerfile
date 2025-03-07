@@ -20,9 +20,5 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . /app
 WORKDIR /app
 
-# Copy the entrypoint script and ensure it's executable
-COPY entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
-
-# Use the entrypoint script to start the FastAPI app
-CMD ["/entrypoint.sh"]
+# Run uvicorn directly, binding to 0.0.0.0 and using the PORT env var
+CMD uvicorn main:app --host 0.0.0.0 --port $PORT
