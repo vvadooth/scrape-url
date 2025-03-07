@@ -3,20 +3,20 @@ FROM python:3.9
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
     wget unzip curl \
-    libxss1 libappindicator1 libindicator7 \
+    libxss1 libappindicator3-1 \
     fonts-liberation libnss3 lsb-release xdg-utils \
     chromium chromium-driver \
     && rm -rf /var/lib/apt/lists/*
 
-# Set up ChromeDriver path
+# Set up environment variables for Chrome & ChromeDriver
 ENV CHROME_BIN="/usr/bin/chromium"
 ENV CHROMEDRIVER_BIN="/usr/bin/chromedriver"
 
 # Install Python dependencies
 COPY requirements.txt .
-RUN pip install -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the application files
+# Copy application files
 COPY . /app
 WORKDIR /app
 
