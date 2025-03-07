@@ -8,12 +8,9 @@ RUN apt-get update && apt-get install -y \
     chromium chromium-driver \
     && rm -rf /var/lib/apt/lists/*
 
-# Set up environment variables for Chromium & ChromeDriver
+# Set up environment variables for Chrome & ChromeDriver
 ENV CHROME_BIN="/usr/bin/chromium"
 ENV CHROMEDRIVER_BIN="/usr/bin/chromedriver"
-
-# (Optional) Set default PORT if not provided by Railway
-ENV PORT=8000
 
 # Install Python dependencies
 COPY requirements.txt .
@@ -23,9 +20,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . /app
 WORKDIR /app
 
-# Copy the entrypoint script
+# Copy the entrypoint script and ensure it's executable
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
-# Use the entrypoint script to start the app
+# Use the entrypoint script to start the FastAPI app
 CMD ["/entrypoint.sh"]
