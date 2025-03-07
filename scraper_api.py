@@ -56,7 +56,9 @@ def scrape_page(url: str) -> str:
         logger.info(f"✅ Successfully extracted {len(extracted_content)} characters.")
         return extracted_content
 
-
+    except Exception as e:
+        logger.error(f"❌ Scraping failed: {str(e)}")
+        return extracted_content
 
 @app.post("/scrape")
 def scrape_url(request: URLRequest):
