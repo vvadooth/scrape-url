@@ -2,7 +2,7 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
-from webdriver_manager.chrome import ChromeDriverManager
+from selenium.webdriver.chrome.options import Options
 import time
 import logging
 
@@ -21,16 +21,17 @@ def scrape_page(url: str) -> str:
     try:
         logger.info(f"🌍 Fetching page content: {url}")
 
-        # Set up Chrome (headless mode)
-        options = webdriver.ChromeOptions()
+        # Set up Chrome options
+        options = Options()
+        options.binary_location = "/usr/bin/chromium"  # Explicitly set Chromium path
         options.add_argument("--headless")
         options.add_argument("--disable-gpu")
-        options.add_argument("--no-sandbox")  # Required for some cloud deployments
-        options.add_argument("--disable-dev-shm-usage")  # Prevent memory issues
+        options.add_argument("--no-sandbox")
+        options.add_argument("--disable-dev-shm-usage")
         options.add_argument("--window-size=1920x1080")
 
         # Set up ChromeDriver service
-        service = Service(ChromeDriverManager().install())  # Auto-installs ChromeDriver
+        service = Service("/usr/bin/chromedriver")  # Explicitly set ChromeDriver path
         driver = webdriver.Chrome(service=service, options=options)
 
         driver.get(url)
@@ -69,11 +70,6 @@ def scrape_url(request: URLRequest):
 
     extracted_text = scrape_page(request.url)
 
-    # 🛠️ Log the extracted text for debugging
-    logger.info(f"🔍 Extracted Content Length: {len(extracted_text)}")
-    logger.debug(f"📝 Extracted Content Preview: {extracted_text[:500]}...")  # Only log first 500 chars
-
-    # 🛠️ Remove the incorrect error check
     if not extracted_text.strip():
         logger.error(f"❌ No content extracted from {request.url}")
         raise HTTPException(status_code=500, detail="No content extracted")
