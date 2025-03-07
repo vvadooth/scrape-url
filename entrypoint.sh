@@ -1,3 +1,6 @@
 #!/bin/sh
-echo "Starting server on port ${PORT:-8000}"
-uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000}
+set -e
+# Use the PORT environment variable if set, default to 8000
+PORT_NUM=${PORT:-8000}
+echo "Starting server on port ${PORT_NUM}"
+exec uvicorn main:app --host 0.0.0.0 --port ${PORT_NUM}
