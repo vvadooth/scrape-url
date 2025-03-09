@@ -6,6 +6,9 @@ from selenium.webdriver.chrome.options import Options
 import time
 import logging
 from youtube_transcript_api import YouTubeTranscriptApi
+import os
+import re
+import requests
 
 # Initialize FastAPI
 app = FastAPI()
@@ -124,4 +127,3 @@ def get_youtube_transcript(request: YouTubeRequest):
     except Exception as e:
         logger.error(f"❌ Failed to get transcript: {str(e)}")
         raise HTTPException(status_code=500, detail="Transcript not available")
-        
