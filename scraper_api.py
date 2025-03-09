@@ -5,6 +5,7 @@ from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 import time
 import logging
+from youtube_transcript_api import YouTubeTranscriptApi
 
 # Initialize FastAPI
 app = FastAPI()
@@ -13,8 +14,16 @@ app = FastAPI()
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+
+YOUTUBE_API_KEY = os.getenv("YOUTUBE_API_KEY")
+
+
 class URLRequest(BaseModel):
     url: str
+
+class YouTubeRequest(BaseModel):
+    video_url: str
+
 
 def scrape_page(url: str) -> str:
     """Uses Selenium to scrape the given URL and return text content."""
@@ -78,3 +87,41 @@ def scrape_url(request: URLRequest):
         "url": request.url,
         "content": extracted_text
     }
+
+
+def extract_video_id(url: str) -> str:
+    """Extracts YouTube video ID from a given URL."""
+    regex = r"(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^\"&?\/\s]{11})"
+    match = re.search(regex, url)
+    return match.group(1) if match else None
+
+def get_video_title(video_id: str) -> str:
+    """Fetch video title from YouTube API"""
+    url = f"https://www.googleapis.com/youtube/v3/videos?part=snippet&id={video_id}&key={YOUTUBE_API_KEY}"
+    response = requests.get(url).json()
+    
+    if "items" in response and response["items"]:
+        return response["items"][0]["snippet"]["title"]
+    return "Unknown Title"
+
+@app.post("/get-transcript")
+def get_youtube_transcript(request: YouTubeRequest):
+    """API endpoint to fetch a YouTube video's transcript and title."""
+    video_id = extract_video_id(request.video_url)
+    if not video_id:
+        raise HTTPException(status_code=400, detail="Invalid YouTube URL")
+
+    try:
+        title = get_video_title(video_id)
+        transcript = YouTubeTranscriptApi.get_transcript(video_id)
+        transcript_text = " ".join(entry["text"] for entry in transcript)
+
+        return {
+            "url": request.video_url,
+            "title": title,
+            "transcript": transcript_text
+        }
+    except Exception as e:
+        logger.error(f"❌ Failed to get transcript: {str(e)}")
+        raise HTTPException(status_code=500, detail="Transcript not available")
+        

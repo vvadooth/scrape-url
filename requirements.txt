@@ -2,3 +2,5 @@ fastapi
 uvicorn
 selenium
 webdriver_manager
+youtube-transcript-api
+requests
