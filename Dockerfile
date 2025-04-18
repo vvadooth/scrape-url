@@ -3,7 +3,6 @@ FROM python:3.9
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
     wget unzip curl \
-    libxss1 libappindicator3-1 \
     fonts-liberation libnss3 lsb-release xdg-utils \
     chromium chromium-driver \
     && rm -rf /var/lib/apt/lists/*
