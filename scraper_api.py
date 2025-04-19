@@ -144,7 +144,7 @@ def scrape_page(url: str) -> str:
                 
         # Combine all text and clean it up
         combined_text = body_text + " " + additional_text
-        extracted_content = ' '.join(combined_text.split())[:200000]  
+        extracted_content = ' '.join(combined_text.split())[:100000000]  
 
         driver.quit()
 
